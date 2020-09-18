@@ -105,14 +105,15 @@ def collate_vocoder(batch):
 def get_tts_datasets(path: Path, batch_size, r, model_type='tacotron'):
     train_data = unpickle_binary(path/'train_dataset.pkl')
     val_data = unpickle_binary(path/'val_dataset.pkl')
-    attention_score_dict = unpickle_binary(path/'atteention_scores_dict.pkl')
     train_data = filter_max_len(train_data)
     val_data = filter_max_len(val_data)
     train_len_original = len(train_data)
-    train_data = filter_bad_attentions(train_data, attention_score_dict)
-    val_data = filter_bad_attentions(val_data, attention_score_dict)
-    print(f'Using {len(train_data)} train files. '
-          f'Filtered {len(train_data) - train_len_original} files due to bad attention!')
+    if model_type == 'forward':
+        attention_score_dict = unpickle_binary(path/'attention_scores_dict.pkl')
+        train_data = filter_bad_attentions(train_data, attention_score_dict)
+        val_data = filter_bad_attentions(val_data, attention_score_dict)
+        print(f'Using {len(train_data)} train files. '
+              f'Filtered {len(train_data) - train_len_original} files due to bad attention!')
     train_ids, train_lens = zip(*train_data)
     val_ids, val_lens = zip(*val_data)
     text_dict = unpickle_binary(path/'text_dict.pkl')
