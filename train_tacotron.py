@@ -13,6 +13,7 @@ from utils.dataset import get_tts_datasets
 from utils.display import *
 from utils.dsp import np_now
 from utils.files import pickle_binary
+from utils.graph_search import extract_durations
 from utils.metrics import attention_score
 from utils.paths import Paths
 from utils.text import phonemes
@@ -42,7 +43,8 @@ def create_gta_features(model: Tacotron,
 def create_align_features(model: Tacotron,
                           train_set: DataLoader,
                           val_set: DataLoader,
-                          save_path: Path):
+                          save_path: Path,
+                          save_path_2: Path):
     assert model.r == 1, f'Reduction factor of tacotron must be 1 for creating alignment features! ' \
                          f'Reduction factor was: {model.r}'
     model.eval()
@@ -58,6 +60,7 @@ def create_align_features(model: Tacotron,
         bs, chars = attn.shape[0], attn.shape[2]
         argmax = np.argmax(attn[:, :, :], axis=2)
         mel_counts = np.zeros(shape=(bs, chars), dtype=np.int32)
+        durations = np.zeros(shape=(bs, chars), dtype=np.int32)
         loc_score, sharp_score = attention_score(torch.tensor(attn), mel_lens, r=model.r)
         for b in range(attn.shape[0]):
             # fix random jumps in attention 
@@ -66,10 +69,16 @@ def create_align_features(model: Tacotron,
                     argmax[b, j] = argmax[b, j-1]
             count = np.bincount(argmax[b, :mel_lens[b]])
             mel_counts[b, :len(count)] = count[:len(count)]
+            durations[b] = extract_durations(x[b], attn[b], mel_lens[b])
             att_score_dict[ids[b]] = (float(loc_score[b]), float(sharp_score[b]))
+            print('durs:')
+            print(mel_counts[b])
+            print(durations[b])
+            print(f'sums: {np.sum(mel_counts)} {np.sum(durations)} {mel_lens[b]}')
 
         for j, item_id in enumerate(ids):
             np.save(str(save_path / f'{item_id}.npy'), mel_counts[j, :], allow_pickle=False)
+            np.save(str(save_path_2 / f'{item_id}.npy'), durations, allow_pickle=False)
         bar = progbar(i, iters)
         msg = f'{bar} {i}/{iters} Batches '
         stream(msg)
