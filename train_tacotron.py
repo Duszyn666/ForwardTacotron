@@ -143,7 +143,7 @@ if __name__ == '__main__':
     elif force_align:
         print('Creating Attention Alignments...\n')
         train_set, val_set = get_tts_datasets(paths.data, 1, model.r)
-        create_align_features(model, train_set, val_set, paths.alg)
+        create_align_features(model, train_set, val_set, paths.alg, paths.alg_2)
         print('\n\nYou can now train ForwardTacotron - use python train_forward.py\n')
     else:
         trainer = TacoTrainer(paths)
