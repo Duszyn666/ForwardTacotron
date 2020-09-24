@@ -33,12 +33,19 @@ def extract_durations(target, att, mel_len):
                     col_ind.append(right_node)
                     data.append(weight_right)
 
-                if i < rows -1:
+                if i < rows - 1 and j < cols:
                     bottom_node = to_node_index(i + 1, j, cols)
                     weight_bottom = mat[i + 1, j]
                     row_ind.append(node)
                     col_ind.append(bottom_node)
                     data.append(weight_bottom)
+
+                if i < rows - 1 and j < cols - 1:
+                    bottom_node = to_node_index(i + 1, j + 1, cols)
+                    weight_bottom_right = mat[i + 1, j + 1]
+                    row_ind.append(node)
+                    col_ind.append(bottom_node)
+                    data.append(weight_bottom_right)
 
         #print(f'max row_ind {max(row_ind)} max col_ind {max(col_ind)} dim {ro}')
         adj_mat = coo_matrix((data, (row_ind, col_ind)), shape=(rows * cols, rows * cols))
